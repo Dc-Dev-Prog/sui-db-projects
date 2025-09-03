@@ -1,23 +1,13 @@
-/*
-/// Module: db_projects
-module db_projects::db_projects;
-*/
+module db_projects::db_projects {
 
-// For Move coding conventions, see
-// https://docs.sui.io/concepts/sui-move-concepts/conventions
+    use std::string::{String, utf8};
+    use sui::vec_map::{VecMap, Self};
 
-module db_projects::db_projects{
-
-    use std::string::[String, utf8];
-    use sui::vec_map::[VecMap, Self];
-
-    key, store, drop, copy
-
-    public struct Project has key, store {
+    public struct Proyecto has key, store {
         id:UID,
         nombre:String,
         repo: String,
-        miembros: VecMap<u8, Miembros>
+        miembros: VecMap<String, Miembros>
     }
 
     public  struct Miembros has store, drop {
@@ -29,50 +19,54 @@ module db_projects::db_projects{
     
     #[error]
     const NOMBRE_REPETIDO: vector<u8> = b"Nombre ya existe";
-    const PROJECT_NO_EXISTE: vector<u8> = b"Projecto no existe";
+    
+    #[error]
+    const PROYECTO_NO_EXISTE: vector<u8> = b"Projecto no existe";
 
-    public fun crear_project(nombre: Syring, repo: String, ctx: &mut TxContext){
-        let projcet = Project { 
+
+    public fun crear_proyecto(nombre: String, repo: String, ctx: &mut TxContext){
+        let proyecto = Proyecto { 
             id: object::new(ctx),
             nombre,
             repo,
             miembros: vec_map::empty()
         };
 
-        transfer::transfer(project, tx_context::sender(ctx))
+        transfer::transfer(proyecto, tx_context::sender(ctx))
     }
 
-    public fun agregar_mienbro(project: &mut Project, nombre: String, puesto: String, nivel: String){
+    public fun agregar_mienbro(proyecto: &mut Proyecto, nombre: String, puesto: String, nivel: String){
         
-        assert!(!project.miembros.contains(&nombre), NOMBRE_REPETIDO );
+        assert!(!proyecto.miembros.contains(&nombre), NOMBRE_REPETIDO );
 
-        let mienbros = Miembros {
+        let miembros = Miembros {
             nombre,
             puesto,
             nivel,
             estado: utf8(b"activo")
-        }
+        };
 
-        project.mienbros.insert(key, mienbros)
+        proyecto.miembros.insert(nombre, miembros);
     }
 
-    public fun actualizar_mienbro(project: &mut Project, nombre: String, puesto: String, nivel: String){
-        assert!(project.miembros.contains(&nombre), PROJECT_NO_EXISTE);
-
-        let n_nombre = projcet.miembros.get_mut(&nombre).nombre;
-        n_mobre = nombre;
+    public fun actualizar_mienbro(proyecto: &mut Proyecto, nombre: String, puesto: String, nivel: String){
         
-        let n_puesto = projcet.miembros.get_mut(&nombre).puesto;
+        assert!(proyecto.miembros.contains(&nombre), PROYECTO_NO_EXISTE );
+
+        let mut n_nombre = proyecto.miembros.get_mut(&nombre).nombre;
+        n_nombre = nombre;
+        
+        let mut n_puesto = proyecto.miembros.get_mut(&nombre).puesto;
         n_puesto = puesto;
 
-        let n_nombre = &mut projcet.miembros.get_mut(&nombre).nivel;
+        let mut n_nivel = proyecto.miembros.get_mut(&nombre).nivel;
         n_nivel = nivel;
     }
 
-    public fun borrar_mienbro(project: &mut Project, nombre: String){
+    public fun borrar_mienbro(proyecto: &mut Proyecto, nombre: String){
         
-        assert!(project.miembros.contains(&nombre), PROJECT_NO_EXISTE);
+        assert!(proyecto.miembros.contains(&nombre), PROYECTO_NO_EXISTE );
         
-        project.miembros.remove();
+        proyecto.miembros.remove(&nombre);
     }
 }
